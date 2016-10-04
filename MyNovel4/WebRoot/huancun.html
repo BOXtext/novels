@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/templatemo-style.css">
+    <title>缓存界面</title>
+</head>
+<body>
+    <div class="fixed-header">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" >
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>                        
+                </button>
+                <a class="navbar-brand" href="#">欢迎来到我的个人网站嘿嘿</a>
+            </div>
+            <nav class="main-menu">
+                <ul>
+                    <li><a href="#home">查看缓存页面</a></li>
+                    <li><a class="external"href="#externals">External</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="container">
+        <section class="col-md-12 content" id="home">
+           <div class="col-lg-6 col-md-6 content-text  background">
+           <button type="button" onclick="read();" id="cun">读取缓存内容</button>
+           <div>
+          		 <input type="text" placeholder="小说名字" id="showT"/><br/>	
+           		<input type="text" placeholder="小说章节" id="showC"/><br/>	
+				<textarea name="" rows="18" cols="100" id="showN" ></textarea>
+			</div>
+           </div>
+       </section>
+</div>
+
+<div class="text-center footer">
+	<div class="container">
+		Copyright @ 2084 Company Name 
+    
+    	| More Templates <a href="" target="_blank" title="个人网站">个人网站</a> - Collect from 
+    </div>
+</div>
+
+
+<script src="js/jquery-2.1.1.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/jquery.singlePageNav.min.js"></script>
+<script src="" type="text/javascript" charset="utf-8"></script>
+<script>
+
+// Check scroll position and add/remove background to navbar
+function checkScrollPosition() {
+    if($(window).scrollTop() > 50) {
+      $(".fixed-header").addClass("scroll");
+  } else {        
+      $(".fixed-header").removeClass("scroll");
+  }
+}
+
+$(document).ready(function () {   
+    // Single page nav
+    $('.fixed-header').singlePageNav({
+        offset: 59,
+        filter: ':not(.external)',
+        updateHash: true        
+    });
+
+    checkScrollPosition();
+
+    // nav bar
+    $('.navbar-toggle').click(function(){
+        $('.main-menu').toggleClass('show');
+    });
+
+    $('.main-menu a').click(function(){
+        $('.main-menu').removeClass('show');
+    });
+});
+
+$(window).on("scroll", function() {
+    checkScrollPosition();    
+});
+//打开数据库
+var dbName = '小说数据库', storeName = '道果', dbVersion = 1;
+    function openDB(callback){  
+    if(openDB.db){  
+        callback(openDB.db);  
+        return;  
+    }  
+    var openRequest = indexedDB.open(dbName, dbVersion);  
+   openRequest.onupgradeneeded = function(e) {
+						var db = e.target.result;
+						console.log("running onupgradeneeded--数据库发生了改变")
+						if(!db.objectStoreNames.contains(storeName)) {  
+            				var store = db.createObjectStore(storeName, {keyPath:"id", autoIncrement: true});  
+            				//创建索引  
+          					  store.createIndex("章", "章节", {unique: false});  
+            					console.log("没有数据库，创建了新的数据库");
+       						 }  
+    	
+						var thisDb = e.target.result;
+						console.log(thisDb.version);
+					}
+					 openRequest.onsuccess = function(e) {  
+        console.log('打开数据库操作成功');  
+        if(callback){  
+            openDB.db = e.target.result;  
+            callback(e.target.result);  
+        }  
+    };  
+}  
+
+//读操作
+function read(){  
+    openDB(function (db){  
+    	var x=[];
+    	var y=[];
+				var showC = document.getElementById("showC");//章节
+				var showN = document.getElementById("showN");//内容
+				var showT = document.getElementById("showT");//小说名字
+				showC.innerHTML = "";
+				showN.innerHTML = "";
+				
+        var transaction = db.transaction(storeName,"readonly");  
+        transaction.oncomplete = function(event) {  
+            console.log("transaction oncomplete");  
+        };  
+        var store = transaction.objectStore(storeName);  
+        //使用索引查询所有姓张的记录  
+       store.openCursor().onsuccess = function(event) {
+				 		var cursor = event.target.result;
+						if(cursor) {
+							var key = cursor.key;
+							 rowData = cursor.value;
+							cursor.continue();
+							console.log(rowData);
+							y.push(rowData.章节);
+							x.push(rowData.内容);
+							console.log(x);
+							console.log(y);
+							showC.value=y;
+							showN.innerHTML=x;
+							showT.value = storeName;
+						}
+						
+						
+					
+					}
+    });  
+}  
+</script>
+</body>
+</html>
